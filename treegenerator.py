@@ -258,6 +258,7 @@ class np_Tree:
                             currid+=1
                             #ew 1 więcej layer
                         elif intersection.size>0 and layer==self.depth-2:
+                            #as everything is a pointer, w will be yupdated in both children and list
                             node.members=np.setdiff1d(node.members,intersection,assume_unique=True)
                             w=np_Node(currid,index,node.set_id,None,None,radius,[],intersection)
                             self.nodes[layer+1].append(w)
@@ -272,7 +273,7 @@ class np_Tree:
 
     def transform(self):
         #+-index
-        for layer in range(0,self.depth,-1):
+        for layer in range(self.depth-2,-1,-1):
             #maintaining children makes this easier
             #we start one layer up - iffthe numbering is coreect, tiihu work
             for node in self.nodes[layer]:
@@ -280,9 +281,12 @@ class np_Tree:
                 #if id were o reset every level, we could reconstruct the inheritance that way
                 new_parent=node.children.pop()
                 for child in node.children:
+                    #some distance adjustment would be necessary - in the initial transform different children may have different distancces (it remains to be seen which version preforms better)
+                    #what if we now think of dist as dist to parent instead of to all children - tat would work
                     child.parent_point=new_parent.point_id
-                    new_parent.children.append(child.point_id)
+                    new_parent.children.append(child)
                 #new_parent.children=node.children
+                #should be fine overall
                 node=new_parent
             # parent=self.nodes[layer].pop()
             # if layer>0:
