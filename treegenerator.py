@@ -285,6 +285,9 @@ class np_Tree:
                     #what if we now think of dist as dist to parent instead of to all children - tat would work
                     child.parent_point=new_parent.point_id
                     new_parent.children.append(child)
+                    #now this gives information about thr distance to parents
+                    child.dist=child.dist*2
+                    new_parent.dist=new_parent.dist*2
                 #new_parent.children=node.children
                 #should be fine overall
                 node=new_parent
@@ -302,11 +305,12 @@ class np_Tree:
             for node in self.nodes[layer]:
                 for child in node.children:
                     #applying the dist fix here for now
-                    G[node.point_id,child]=node.dist*2
-                    G[child,node.point_id]=node.dist*2
+                    G[node.point_id,child.point_id]=child.dist*2
+                    G[child.point_id,node.point_id]=child.dist*2
         
         L=csgraph.laplacian(G,symmetrized=True)
-        vals,vectors=linalg.eigs(L,k=3)
+        vals,vectors=linalg.eigs(L,k=3,which='SM')
+        print(vals,vectors)
         # tovisit=deque()
         # tovisit.append(self.nodes[0][0])
         # while tovisit:
@@ -336,3 +340,4 @@ testtree=np_Tree(70000,y,delta,k)
 testtree.node_generation_with_children(X.astype('float32'))
 testtree.testing_printout()
 testtree.transform()
+testtree.create_matrix()
