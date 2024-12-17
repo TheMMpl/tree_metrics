@@ -8,7 +8,7 @@ from scipy.sparse import dok_matrix
 from scipy.sparse import linalg
 from scipy.sparse import csgraph
 import matplotlib.pyplot as plt
-
+import pickle
 
 @dataclass
 class np_Node:
@@ -34,6 +34,7 @@ class np_Tree:
         self.root=np_Node(0,None,None,None,None,self.radius*delta,[],np.array([i for i in range(points)]))
         self.nodes=[[] for i in range(self.depth)]
         self.scaling=scaling
+        self.state='default'
 
     def node_generation_with_children(self,X : np.ndarray):
         # we operate only on point indices - and find them in X
@@ -103,10 +104,18 @@ class np_Tree:
                             currid+=1
 
     def testing_printout(self):
-        for nodelist in self.nodes:
-            for node in nodelist:
-                print(node)
-            print('################################')
+
+        if self.state=='default':
+            name='tree.txt'
+        else:
+            name='transformed_tree.txt'
+
+        with open(name, mode="w") as file:
+
+            for nodelist in self.nodes:
+                for node in nodelist:
+                    file.write(node)
+                print('printout complete')
 
     def transform(self):
         #+-index
@@ -130,8 +139,8 @@ class np_Tree:
                 #new_parent.children=node.children
                 #should be fine overall
                 node=new_parent
+        self.state='transformed'
 
-    
     def create_matrix(self):
         G=dok_matrix((self.points,self.points),dtype=np.float32)
         #instead of BFS, we will travel layer by layer - no need to maintain pointers to children
@@ -141,10 +150,13 @@ class np_Tree:
             for node in self.nodes[layer]:
                 for child in node.children:
                     #applying the dist fix here for now
-                    G[node.point_id,child.point_id]=child.dist*2
-                    G[child.point_id,node.point_id]=child.dist*2
-        
+                    print(node.point_id,child.point_id)
+                    G[node.point_id, child.point_id]=child.dist*2
+                    G[child.point_id, node.point_id]=child.dist*2
+
+        sparse.save_npz('graph',G) 
         L=csgraph.laplacian(G,symmetrized=True)
+        sparse.save_npz('laplacian',L) 
         self.vals,self.vectors=linalg.eigs(L,k=3,which='SM')
         print(self.vals,self.vectors)
 
@@ -198,7 +210,13 @@ testtree=np_Tree(70000,y,delta,k,scaling)
 #testtree.benchmark_generation(X.astype('float32'))
 testtree.node_generation_with_children(X.astype('float32'))
 testtree.testing_printout()
+with open('initial_tree.pkl','wb') as result:
+    pickle.dump(testtree,result,pickle.HIGHEST_PROTOCOL)
 testtree.transform()
+with open('transformed_tree.pkl','wb') as result:
+    pickle.dump(testtree,result,pickle.HIGHEST_PROTOCOL)
+testtree.testing_printout()
+
 testtree.create_matrix()
 
 
