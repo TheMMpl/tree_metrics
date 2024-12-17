@@ -19,8 +19,6 @@ class np_Node:
     point_class : int | None
     dist : float
     children : list
-    #if we are to build up children may not be necessary
-    #children : np.ndarray
     members : np.ndarray
 
 
@@ -35,6 +33,7 @@ class np_Tree:
         self.nodes=[[] for i in range(self.depth)]
         self.scaling=scaling
         self.state='default'
+        print(self.radius)
 
     def node_generation_with_children(self,X : np.ndarray):
         # we operate only on point indices - and find them in X
@@ -66,30 +65,15 @@ class np_Tree:
                     localsquares=squares[original_members]
                     localX=X[original_members]
                     print(localsquares.shape)
-                    #print(localX.shape)
-                    #to jest część kwadratowa
+
                     for index in tqdm(self.p):
-                        #this wasn't an issue before as empty members would just give empty nonzero
-                        #now we have to ensure node is nonempty
-                        # but the members also change shape, so we would need to  view new arrays for each calculation
-                        #by maintaining old_members this becomes unecessary
-                        #if node.members.size>0:
-                        #some numerical errors cause negative valuses when the true distance is 0 (so abs)
-                        # we can view oly the distances from members, though we still need to iterate or te points
+
                         dists=np.sqrt(np.abs(localsquares-2*np.dot(localX,X[index])+squares[index]))/self.scaling
-                        #ball=np.flatnonzero(dists<radius)
-                        # print('###########')
-                        # print(layer)
-                        # print((dists<radius).shape)
-                        # print(node.members.shape)
-                        # print('#############')
                         ball=original_members[dists<radius]
-                        #print(ball)
                         intersection=np.intersect1d(node.members,ball,assume_unique=True)
-                        #print(intersection)
+
                         if intersection.size>0 and layer<self.depth-2:
                             node.members=np.setdiff1d(node.members,intersection,assume_unique=True)
-                            #we could append nodes themselves to children
                             w=np_Node(currid,None,node.set_id,None,None,radius,[],intersection)
                             self.nodes[layer+1].append(w)
                             node.children.append(w)
@@ -114,8 +98,9 @@ class np_Tree:
 
             for nodelist in self.nodes:
                 for node in nodelist:
-                    file.write(node)
-                print('printout complete')
+                    file.write(str(node))
+                file.write('\n')
+        print('printout complete')
 
     def transform(self):
         #+-index
@@ -146,7 +131,8 @@ class np_Tree:
         #instead of BFS, we will travel layer by layer - no need to maintain pointers to children
         #this may chcnge if ittwould be more elegant
         print("generating matrix")
-        for layer in range(self.depth):
+        #this being 1 larger shouldn't cause issues, but this is enough
+        for layer in range(self.depth-1):
             for node in self.nodes[layer]:
                 for child in node.children:
                     #applying the dist fix here for now
@@ -201,17 +187,14 @@ while delta<diameter:
     k+=1
 print(delta,k)
 print('preprocessing complete')
-# testtree=Tree(70000,y,delta,k)
-# #testtree.benchmark_generation(X.astype('float32'))
-# testtree.node_generation(X.astype('float32'))
-# testtree.testing_printout()
 
 testtree=np_Tree(70000,y,delta,k,scaling)
 #testtree.benchmark_generation(X.astype('float32'))
 testtree.node_generation_with_children(X.astype('float32'))
-testtree.testing_printout()
 with open('initial_tree.pkl','wb') as result:
     pickle.dump(testtree,result,pickle.HIGHEST_PROTOCOL)
+testtree.testing_printout()
+
 testtree.transform()
 with open('transformed_tree.pkl','wb') as result:
     pickle.dump(testtree,result,pickle.HIGHEST_PROTOCOL)
