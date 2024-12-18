@@ -155,27 +155,58 @@ class np_Tree:
             for node in self.nodes[layer]:
                 for child in node.children:
                     #applying the dist fix here for now
-                    print(node.point_id,child.point_id)
+                    #print(node.point_id,child.point_id)
+                    if node.point_id==child.point_id:
+                        print("error")
                     G[node.point_id, child.point_id]=child.dist*2#albo 4 - teraz 2 pow być ok
                     G[child.point_id, node.point_id]=child.dist*2
 
-        sparse.save_npz('graph',G) 
-        L=csgraph.laplacian(G,symmetrized=True)
-        sparse.save_npz('laplacian',L) 
+        #sparse.save_npz('graph',G) 
+        L=csgraph.laplacian(G,symmetrized=True,normed=True)
+        #sparse.save_npz('laplacian',L) 
         self.vals,self.vectors=linalg.eigs(L,k=3,which='SM')
-        print(self.vals,self.vectors)
+        np.savetxt('eigenvectors_normed.txt',self.vectors)
+        print(self.vals)
 
 
 # with open('transformed_tree.pkl','rb') as result:
 #     tree=pickle.load(result)
 
-with open('initial_tree.pkl','rb') as result:
+with open('transformed_tree_working.pkl','rb') as result:
     tree=pickle.load(result)
 
-
+mnist = datasets.fetch_openml('mnist_784', version=1)
+X, y = mnist.data.to_numpy(), mnist.target.astype('float32')
 print(tree.nodes[0])
 
-tree.transform()
-tree.testing_printout()
+# tree.transform()
+# tree.testing_printout()
+
 # with open('transformed_tree.pkl','wb') as result:
 #     pickle.dump(testtree,result,pickle.HIGHEST_PROTOCOL)
+
+tree.create_matrix()
+
+
+# Example NumPy arrays
+x_coords = tree.vectors.T[1]
+y_coords = tree.vectors.T[2]
+print(x_coords.shape)
+labels = y # Labels signify the class of each point
+print(y)
+
+# Create a scatter plot with points colored based on their labels
+unique_labels = np.unique(labels)  # Get unique labels
+colors = plt.cm.tab10(np.linspace(0, 1, len(unique_labels)))  # Generate distinct colors
+
+for label, color in zip(unique_labels, colors):
+    # Mask for points belonging to the current label
+    mask = labels == label
+    if label==2.0 or label==6.0:
+        plt.scatter(x_coords[mask], y_coords[mask], color=color, label=f'Class {label}')
+
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('Mnist projection')
+plt.legend()
+plt.savefig("Mnist_projection.png", dpi=300, bbox_inches='tight')

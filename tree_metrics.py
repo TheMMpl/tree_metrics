@@ -153,7 +153,7 @@ class np_Tree:
             for node in self.nodes[layer]:
                 for child in node.children:
                     #applying the dist fixe for now
-                    print(node.point_id,child.point_id)
+                    #print(node.point_id,child.point_id)
                     G[node.point_id, child.point_id]=child.dist*2
                     G[child.point_id, node.point_id]=child.dist*2
 
@@ -209,12 +209,12 @@ print('preprocessing complete')
 testtree=np_Tree(70000,y,delta,k,scaling)
 #testtree.benchmark_generation(X.astype('float32'))
 testtree.node_generation_with_children(X.astype('float32'))
-with open('initial_tree.pkl','wb') as result:
+with open('initial_tree_working.pkl','wb') as result:
     pickle.dump(testtree,result,pickle.HIGHEST_PROTOCOL)
 testtree.testing_printout()
 
 testtree.transform()
-with open('transformed_tree.pkl','wb') as result:
+with open('transformed_tree_working.pkl','wb') as result:
     pickle.dump(testtree,result,pickle.HIGHEST_PROTOCOL)
 testtree.testing_printout()
 
