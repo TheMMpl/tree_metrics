@@ -92,7 +92,7 @@ class np_Tree:
         if self.state=='default':
             name='tree.txt'
         else:
-            name='transformed_tree.txt'
+            name='transformed_tree1.txt'
 
         with open(name, mode="w") as file:
 
@@ -109,23 +109,40 @@ class np_Tree:
             print(layer)
             #maintaining children makes this easier
             #we start one layer up - iffthe numbering is coreect, tiihu work
-            for node in self.nodes[layer]:
+            for i, node in tqdm(enumerate(self.nodes[layer])):
                 #this assumes children are nodes
                 #if id were o reset every level, we could reconstruct the inheritance that way
-                print(node)
+                #print(node)
                 new_parent=node.children.pop()
+                if new_parent.point_id is None:
+                    if layer==3:
+                        print(new_parent)
+                    #print(layer)
                 for child in node.children:
                     #some distance adjustment would be necessary - in the initial transform different children may have different distancces (it remains to be seen which version preforms better)
                     #what if we now think of dist as dist to parent instead of to all children - tat would work
                     child.parent_point=new_parent.point_id
+                    # if child.parent_point is not None:
+                    #     print(child.parent_point)
                     new_parent.children.append(child)
                     #now this gives information about thr distance to parents
                     child.dist=child.dist*2
                     new_parent.dist=new_parent.dist*2
                 #new_parent.children=node.children
                 #should be fine overall
-                node=new_parent
+                #print(new_parent.children)
+                #we have to update the child pointer of the parent of node
+                self.nodes[layer][i]=new_parent
+                if layer>0:
+                    #not ideal. but i've lost the ids, may be necessarry to redesign this
+                    for j, vertex in enumerate(self.nodes[layer-1][node.parent_set].children):
+                        if vertex==node:
+                            self.nodes[layer-1][node.parent_set].children[j]=new_parent
+
+                #print(node)
         self.state='transformed'
+        # for node in self.nodes[4]:
+        #     print(node)
 
     def create_matrix(self):
         G=dok_matrix((self.points,self.points),dtype=np.float32)
@@ -148,9 +165,16 @@ class np_Tree:
         print(self.vals,self.vectors)
 
 
-with open('transformed_tree.pkl','rb') as result:
+# with open('transformed_tree.pkl','rb') as result:
+#     tree=pickle.load(result)
+
+with open('initial_tree.pkl','rb') as result:
     tree=pickle.load(result)
+
 
 print(tree.nodes[0])
 
 tree.transform()
+tree.testing_printout()
+# with open('transformed_tree.pkl','wb') as result:
+#     pickle.dump(testtree,result,pickle.HIGHEST_PROTOCOL)
