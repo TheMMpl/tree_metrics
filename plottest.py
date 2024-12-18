@@ -126,8 +126,9 @@ class np_Tree:
                     #     print(child.parent_point)
                     new_parent.children.append(child)
                     #now this gives information about thr distance to parents
-                    child.dist=child.dist*2
-                    new_parent.dist=new_parent.dist*2
+                    #zbędne raczej
+                    #child.dist=new_parent.dist
+                    new_parent.dist=node.dist
                 #new_parent.children=node.children
                 #should be fine overall
                 #print(new_parent.children)
@@ -155,7 +156,7 @@ class np_Tree:
                 for child in node.children:
                     #applying the dist fix here for now
                     print(node.point_id,child.point_id)
-                    G[node.point_id, child.point_id]=child.dist*2
+                    G[node.point_id, child.point_id]=child.dist*2#albo 4 - teraz 2 pow być ok
                     G[child.point_id, node.point_id]=child.dist*2
 
         sparse.save_npz('graph',G) 
